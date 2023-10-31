@@ -1,0 +1,75 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int id;
+    int arrival_time;
+    int estimated_run_time;
+    int priority;
+    int waiting_time;
+} Process;
+
+void calculatePriority(Process *process) {
+    if (process->estimated_run_time > 0) {
+        process->priority = 1 + ((float)process->waiting_time / process->estimated_run_time);
+    } else {
+        process->priority = 0;
+    }
+}
+
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    Process *processes = (Process *)malloc(n * sizeof(Process));
+
+    for (int i = 0; i < n; i++) {
+        printf("Enter arrival time and estimated run time for process P%d: ", i + 1);
+        scanf("%d %d", &processes[i].arrival_time, &processes[i].estimated_run_time);
+        processes[i].id = i + 1;
+        processes[i].waiting_time = 0;
+    }
+
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (processes[i].arrival_time > processes[j].arrival_time) {
+                Process temp = processes[i];
+                processes[i] = processes[j];
+                processes[j] = temp;
+            }
+        }
+    }
+
+    int total_waiting_time = 0;
+
+    int current_time = processes[0].arrival_time;
+
+    printf("Gantt Chart:\n");
+    for (int i = 0; i < n; i++) {
+        while (current_time < processes[i].arrival_time) {
+            printf("| Idle ");
+            current_time++;
+        }
+        while (processes[i].estimated_run_time > 0) {
+            printf("| P%d ", processes[i].id);
+            processes[i].waiting_time += current_time - processes[i].arrival_time;
+            total_waiting_time += processes[i].waiting_time;
+            current_time += processes[i].estimated_run_time;
+            processes[i].estimated_run_time = 0; // Mark as completed
+        }
+    }
+    printf("|\n");
+
+    printf("Waiting Times:\n");
+    for (int i = 0; i < n; i++) {
+        printf("P%d: %d\n", processes[i].id, processes[i].waiting_time);
+    }
+
+    float average_waiting_time = (float)total_waiting_time / n;
+    printf("Average Waiting Time: %.2f\n", average_waiting_time);
+
+    free(processes);
+
+    return 0;
+}
